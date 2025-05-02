@@ -1,154 +1,105 @@
 # Sheetlet Packer
 
-This project generates and processes cell geometries for sheetlet packing simulations. It creates a grid of cells and fillers within a sheetlet boundary, processes them through MATLAB for thickening, and generates meshes for further analysis.
+This project provides tools for packing cells within sheetlets, processing them through MATLAB, and generating meshes for simulation.
 
 ## Project Structure
 
-```
-.
-├── sheetlet_packer.py      # Main cell packing and processing script
-├── calling_matlab.py       # Interface for MATLAB processing
-├── create_mesh.py          # Mesh generation from processed cells
-├── auxiliary.py            # Helper functions
-├── matlab_scripts/         # MATLAB processing scripts
-├── output/                 # Output .npy files
-├── images/                 # Visualization outputs
-├── matlab_inputs/          # Input files for MATLAB
-├── matlab_outputs/         # Output files from MATLAB
-└── meshing/                # Generated meshes
-```
+- `sheetlet_packer.py`: Main class for cell packing
+- `run_simulation.py`: Script to run the packing process
+- `calling_matlab.py`: Interface for MATLAB processing
+- `create_mesh.py`: Mesh generation from processed geometries
+- `matlab_scripts/`: MATLAB scripts for cell processing
+- `output/`: Directory for output files
+- `images/`: Directory for visualization files
+- `matlab_inputs/`: Directory for MATLAB input files
+- `matlab_outputs/`: Directory for MATLAB output files
+- `meshing/`: Directory for generated meshes
 
 ## Setup
 
-1. **Dependencies**:
-   - Python 3.x
-   - MATLAB R2023a or later
-   - Required Python packages:
-     - numpy
-     - shapely
-     - scipy
-     - matplotlib
-     - PIL
-     - polypacker
+### Dependencies
+- Python 3.x
+- Required Python packages:
+  - numpy
+  - shapely
+  - scipy
+  - matplotlib
+  - PIL
+  - polypacker
+- MATLAB R2023a or later
 
-2. **MATLAB Setup**:
-   - Ensure MATLAB is installed and accessible from the command line
-   - MATLAB scripts should be in the `matlab_scripts/` directory
-
-3. **Directory Structure**:
-   - The script will automatically create necessary directories:
-     - `output/`
-     - `images/`
-     - `matlab_inputs/`
-     - `matlab_outputs/`
-
-## Configuration
-
-The main configuration is in `sheetlet_packer.py`:
+### Configuration
+The main configuration is defined in `sheetlet_packer.py`:
 
 ```python
 CONFIG = {
-    'output_dir': 'output',
-    'images_dir': 'images',
-    'matlab_inputs_dir': 'matlab_inputs',
-    'cell_data_file': 'polys.npy',
-    'units_per_pixel': 0.06/1000,
-    'plot_dpi': 500,
-    'final_plot_dpi': 800,
-    'plot_figsize': (7, 7),
-    'font_size': 13,
+    'output_dir': 'output/',
+    'images_dir': 'images/',
+    'matlab_inputs_dir': 'matlab_inputs/',
+    'matlab_scripts_dir': 'matlab_scripts/',
+    'plot_settings': {
+        'dpi': 300,
+        'format': 'png',
+        'transparent': True
+    },
     'colors': {
-        'cells': '#8a0101',
-        'fillers': 'black',
-        'sheetlet': '#00d149'
+        'cells': '#1f77b4',
+        'fillers': '#ff7f0e',
+        'sheetlet': '#2ca02c'
     }
 }
 ```
 
-## Visualization Options
+## File Outputs
 
-The `isPlot` parameter controls the generation of visualization files. When `isPlot=True`, the following images are generated:
+### From sheetlet_packer.py
+- `output/` directory:
+  - `output_sheetlet_index_{index}_seed_{seed}.npy`: Initial cell arrangement
+  - `lessfiller_checked_output_{seed}__{index}.npy`: Processed cell arrangement
+- `images/` directory:
+  - Various visualization files showing the packing progress
+- `matlab_inputs/` directory:
+  - Input files for MATLAB processing
 
-### During Initial Packing (`sheetlet_packer.py`):
-- **Initial Phase**:
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_init.png`: Shows the initial cell arrangement with:
-    - Cells in red (#8a0101)
-    - Fillers in black
-    - Sheetlet boundary in green (#00d149)
-    - Includes legend and axis labels in millimeters
+### From MATLAB Processing
+- `matlab_outputs/` directory:
+  - `checked_geo_{seed}_{index}.mat`: Final processed cell geometries
+  - `beforethicken_output_sheetlet_index_{index}_seed_{seed}.mat`: Pre-thickening state
+  - `output_sheetlet_index_{index}_seed_{seed}.mat`: Post-thickening state
 
-- **Repulsion Phase**:
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_repulsion.png`: Shows the cell arrangement after the initial repulsion phase
-  - Generated every 5 steps during the repulsion phase
-
-- **Main Packing Phase**:
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_step_{i}.png`: Shows the cell arrangement during the main packing phase
-  - Generated every 100 steps
-  - Includes cells, fillers, and sheetlet boundary
-
-- **Final Results**:
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_final.png`: Shows the final cell arrangement
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_ics.png`: Plots the Intracellular Space (ICS) values over iterations
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_sheetlet.png`: Binary image of the sheetlet boundary
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_cells.png`: Binary image of the cell arrangement
-
-## File Outputs for sheetlet_packer.py
-
-### 1. Initial Packing (`sheetlet_packer.py`)
-- **Output Directory**: `output/`
-  - `output_sheetlet_index_{index}_seed_{seed}.npy`: Contains packed cells, sheetlet, and centroid
-  - `lessfiller_checked_output_{seed}__{index}.npy`: Initial cell data before thickening
-
-- **Images Directory**: `images/`
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_init.png`: Initial cell arrangement
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_repulsion.png`: After repulsion phase
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_final.png`: Final cell arrangement
-  - `cellgrid_output_sheetlet_index_{index}_seed_{seed}_ics.png`: ICS values plot
-
-- **MATLAB Inputs**: `matlab_inputs/`
-  - `output_sheetlet_index_{index}_seed_{seed}_cells.mat`: Cell data for MATLAB
-  - `output_sheetlet_index_{index}_seed_{seed}_sheetlet.mat`: Sheetlet boundary for MATLAB
-
-### 2. MATLAB Processing (`calling_matlab.py`)
-- **MATLAB Outputs**: `matlab_outputs/`
-  - `checked_geo_{seed}_{index}.mat`: Processed cell geometries
-  - `beforethicken_output_sheetlet_index_{index}_seed_{seed}.mat`: Cells before thickening
-  - `output_sheetlet_index_{index}_seed_{seed}.mat`: Final thickened cells
-
-### 3. Mesh Generation (`create_mesh.py`)
-- **Mesh Outputs**: `meshing/packed_geo/`
-  - `myocyte_{counter}.msh`: Individual cell meshes
-- **Analysis Files**:
-  - `areas_nothicken_{seed}.npy`: Cell areas before thickening
-  - `check_thicken_{seed}.npy`: Cell areas after thickening
+### From Mesh Generation
+- `meshing/packed_geo/` directory:
+  - `myocyte_{index}.msh`: Generated mesh files for each cell
 
 ## Usage
 
-1. **Run Packing**:
-```python
-python sheetlet_packer.py
-```
+1. Run the packing process:
+   ```bash
+   python run_simulation.py
+   ```
 
-2. **Process with MATLAB**:
-```python
-python calling_matlab.py
-```
+2. Process with MATLAB:
+   ```bash
+   python calling_matlab.py
+   ```
 
-3. **Generate Meshes**:
-```python
-python create_mesh.py
-```
+3. Generate meshes:
+   ```bash
+   python create_mesh.py
+   ```
+
+## Visualization Options
+
+The `isPlot` parameter in `sheetlet_packer.py` controls the generation of visualization files:
+- When `isPlot=True` (default), additional files are generated showing the progress of the packing process and iterations
+- When `isPlot=False`, only essential binary images for MATLAB processing are created
 
 ## Notes
 
-- The script uses a seed-based system for reproducibility
-- Each sheetlet (index) is processed independently
-- The process includes:
-  1. Initial cell packing
-  2. Repulsion phase
-  3. MATLAB processing for thickening
-  4. Mesh generation
-  5. Analysis of cell properties
+- The process uses a seed-based system for reproducibility
+- Each sheetlet is processed independently
+- The MATLAB processing includes cell thickening and overlap removal
+- Mesh generation creates 3D geometries from the 2D cell arrangements
 
 ## Visualization
 
